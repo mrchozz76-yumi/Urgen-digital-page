@@ -1,0 +1,128 @@
+import { useState } from "react"; import { Card, CardContent } from "@/components/ui/card"; import { Button } from "@/components/ui/button"; import { Heart, MessageCircle, Reply } from "lucide-react";
+
+export default function App() { const [posts, setPosts] = useState([]); const [file, setFile] = useState(null); const [commentInput, setCommentInput] = useState(""); const [replyInput, setReplyInput] = useState(""); const [activeReplyPost, setActiveReplyPost] = useState(null); const [activeReplyIndex, setActiveReplyIndex] = useState(null); const [profilePic, setProfilePic] = useState(null); const [username, setUsername] = useState("User");
+
+const handleUpload = () => { if (!file) return; const newPost = { id: Date.now(), user: username, image: URL.createObjectURL(file), profile: profilePic || "https://via.placeholder.com/40", likes: 0, comments: [], }; setPosts([newPost, ...posts]); setFile(null); };
+
+const handleLike = (id) => { setPosts(posts.map(post => post.id === id ? { ...post, likes: post.likes + 1 } : post)); };
+
+const handleComment = (id) => { if (!commentInput.trim()) return; setPosts(posts.map(post => post.id === id ? { ...post, comments: [ ...post.comments, { text: commentInput, replies: [], profile: profilePic || "https://via.placeholder.com/30", user: username } ] } : post )); setCommentInput(""); };
+
+const handleReply = (postId, commentIndex) => { if (!replyInput.trim()) return; setPosts(posts.map(post => { if (post.id === postId) { const updatedComments = [...post.comments]; updatedComments[commentIndex].replies.push({ text: replyInput, profile: profilePic || "https://via.placeholder.com/25", user: username }); return { ...post, comments: updatedComments }; } return post; })); setReplyInput(""); setActiveReplyPost(null); setActiveReplyIndex(null); };
+
+return ( <div className="min-h-screen bg-black text-white px-6 py-10"> {/* Header */} <div className="text-center mb-12"> <h1 className="text-5xl font-extrabold bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent"> Welcome to URGEN DIGITAL PAGE </h1> <p className="mt-4 text-lg text-gray-400">A public wall to share photos, like, and comment.</p> </div>
+
+{/* Profile Setup */}
+  <div className="flex flex-col items-center mb-12">
+    <label className="mb-2 text-gray-300">Choose a username:</label>
+    <input
+      type="text"
+      value={username}
+      onChange={(e) => setUsername(e.target.value)}
+      className="mb-4 rounded-lg px-3 py-1 bg-gray-800 text-white"
+    />
+    <label className="mb-2 text-gray-300">Upload your profile picture:</label>
+    <input
+      type="file"
+      accept="image/*"
+      onChange={(e) => setProfilePic(URL.createObjectURL(e.target.files[0]))}
+      className="mb-6"
+    />
+    {profilePic && <img src={profilePic} alt="Profile" className="w-20 h-20 rounded-full mb-4 border-2 border-purple-500" />}
+  </div>
+
+  {/* Upload Section */}
+  <div className="flex flex-col items-center mb-12">
+    <input
+      type="file"
+      accept="image/*"
+      onChange={(e) => setFile(e.target.files[0])}
+      className="mb-4"
+    />
+    <Button onClick={handleUpload} className="bg-purple-600 hover:bg-purple-800">
+      Upload Photo
+    </Button>
+  </div>
+
+  {/* Posts */}
+  <div className="space-y-8 max-w-2xl mx-auto">
+    {posts.map((post) => (
+      <Card key={post.id} className="bg-gray-900 border border-gray-800">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3 mb-4">
+            <img src={post.profile} alt="Profile" className="w-10 h-10 rounded-full border border-purple-500" />
+            <span className="text-gray-300 font-semibold">{post.user}</span>
+          </div>
+          <img src={post.image} alt="Post" className="rounded-2xl mb-4 w-full" />
+          <div className="flex items-center gap-4 mb-4">
+            <button onClick={() => handleLike(post.id)} className="flex items-center gap-2">
+              <Heart className="w-5 h-5 text-pink-500" /> {post.likes}
+            </button>
+          </div>
+          <div>
+            <h3 className="font-bold mb-2">Comments</h3>
+            {post.comments.map((c, i) => (
+              <div key={i} className="mb-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <img src={c.profile} alt="Commenter" className="w-8 h-8 rounded-full border border-gray-600" />
+                  <p className="text-gray-300"><span className="font-semibold">{c.user}: </span>{c.text}</p>
+                </div>
+                <div className="ml-10 mt-2 space-y-1">
+                  {c.replies.map((r, j) => (
+                    <div key={j} className="flex items-center gap-2">
+                      <img src={r.profile} alt="Replier" className="w-6 h-6 rounded-full border border-gray-700" />
+                      <p className="text-sm text-gray-400"><span className="font-semibold">{r.user}: </span>{r.text}</p>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={() => {
+                    setActiveReplyPost(post.id);
+                    setActiveReplyIndex(i);
+                  }}
+                  className="flex items-center gap-1 text-purple-400 text-sm mt-1"
+                >
+                  <Reply className="w-4 h-4" /> Reply
+                </button>
+
+                {activeReplyPost === post.id && activeReplyIndex === i && (
+                  <div className="flex gap-2 mt-2">
+                    <input
+                      type="text"
+                      value={replyInput}
+                      onChange={(e) => setReplyInput(e.target.value)}
+                      placeholder="Write a reply..."
+                      className="flex-1 rounded-lg px-3 py-1 bg-gray-800 text-white"
+                    />
+                    <Button
+                      onClick={() => handleReply(post.id, i)}
+                      size="sm"
+                      className="bg-pink-600"
+                    >
+                      Send
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ))}
+            <div className="flex gap-2 mt-2">
+              <input
+                type="text"
+                value={commentInput}
+                onChange={(e) => setCommentInput(e.target.value)}
+                placeholder="Write a comment..."
+                className="flex-1 rounded-lg px-3 py-1 bg-gray-800 text-white"
+              />
+              <Button onClick={() => handleComment(post.id)} size="sm" className="bg-purple-500">
+                <MessageCircle className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    ))}
+  </div>
+</div>
+
+); }
+
